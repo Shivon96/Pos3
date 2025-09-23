@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>පතිරගේ ඉලෙක්ට්‍රොනික්ස්</title>
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#007bff">
+    <style>
+        body {
+            font-family: 'Iskoola Pota', 'Malithi Web', Arial, sans-serif;
+            padding: 15px;
+            background: #f8f9fa;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #007bff;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .job {
+            background: #f1f1f1;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            position: relative;
+        }
+        .job-status {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+        }
+        .payment-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: white;
+        }
+        .delivered { background: green; }
+        .ready { background: orange; }
+        .progress { background: #007bff; }
+        .pending { background: red; }
+        .paid { background: green; }
+        .partial { background: orange; }
+        .unpaid { background: red; }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #007bff;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        #exportBtn {
+            background: #28a745;
+        }
+        #searchBtn {
+            background: #ffc107;
+            color: #212529;
+        }
+        #clearSearchBtn {
+            background: #dc3545;
+            color: white;
+        }
+        .complete-btn, .edit-btn, .edit-payment-btn, .sms-btn, .deliver-btn {
+            padding: 6px 10px;
+            font-size: 12px;
+            margin-top: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        .complete-btn, .deliver-btn { background: #28a745; color: white; }
+        .edit-btn { background: #17a2b8; color: white; }
+        .edit-payment-btn { background: #ffc107; color: #212529; }
+        .sms-btn { background: #007bff; color: white; }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            text-align: left;
+        }
+        .modal-title {
+            margin-top: 0;
+            color: #007bff;
+            font-size: 18px;
+        }
+        .modal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #007bff;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            background: #f1f1f1;
+            border: none;
+            font-weight: bold;
+            font-size: 16px;
+            white-space: nowrap;
+        }
+        .tab.active {
+            background: #007bff;
+            color: white;
+        }
+
+        /* Footer */
+        .footer {
+            margin-top: 30px;
+            padding: 15px;
+            background: #007bff;
+            color: white;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        /* Job Number Badge */
+        .job-number {
+            background: #6c757d;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 පතිරගේ ඉලෙක්ට්‍රොනික්ස්</h1>
+        <p style="color: #666; font-size: 14px;">අලුත්වැඩියා කළමනාකරණය (LKR)</p>
+
+        <div class="form">
+            <label>පාරිභෝගික නම *</label>
+            <input type="text" id="customerName" placeholder="උදා: නිරෝෂන් පෙරේරා" required>
+
+            <label>දුරකථන අංකය *</label>
+            <input type="tel" id="customerPhone" placeholder="උදා: 0712345678" required>
+
+            <label>ලිපිනය</label>
+            <textarea id="customerAddress" rows="2" placeholder="ගෙයි අංකය, වීදිය, නගරය"></textarea>
+
+            <label>වෙළඳ නාමය</label>
+            <input type="text" id="deviceBrand" placeholder="උදා: Samsung, Apple, Dell">
+
+            <label>මාදිලිය *</label>
+            <input type="text" id="deviceModel" placeholder="උදා: Galaxy S23, MacBook Pro" required>
+
+            <label>ගැටළුව විස්තර කරන්න</label>
+            <textarea id="issueDesc" rows="3" placeholder="ගැටළුව විස්තර කරන්න..."></textarea>
+
+            <label>අලුත්වැඩියා දිනය (ලැබුණු)</label>
+            <input type="date" id="repairDate">
+
+            <label>අපේක්ෂිත භාරදීමේ දිනය</label>
+            <input type="date" id="deliveryDate">
+
+            <label>තත්ත්වය</label>
+            <select id="status">
+                <option value="Pending">බලාපොරොත්තුවෙන්</option>
+                <option value="In Progress">ක්‍රියාවලියේ</option>
+                <option value="Ready for Pickup">භාර ගැනීමට සූදානම්</option>
+            </select>
+
+            <button id="saveBtn">💾 අලුත්වැඩියා රැකියාව සුරකින්න</button>
+        </div>
+
+        <div class="actions">
+            <input type="text" id="searchInput" class="search-box" placeholder="🔍 නම, දුරකථන අංකය හෝ බිල්පත් අංකයෙන් සොයන්න (උදා: PE-2025-0001)">
+            <button id="searchBtn">සොයන්න</button>
+            <button id="clearSearchBtn">මකන්න</button>
+            <button id="exportBtn">📤 සියලු රැකියා අපනයනය කරන්න</button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" data-tab="active">🔧 ක්‍රියාකාරී රැකියා</button>
+            <button class="tab" data-tab="delivered">📦 භාරදුන් භාණ්ඩ</button>
+            <button class="tab" data-tab="all">📋 සියලු රැකියා</button>
+        </div>
+
+        <div id="jobList">
+            <!-- Jobs will appear here -->
+        </div>
+
+        <div class="footer">
+            ☎️ හොට්ලයින්: 070 607 7 607<br>
+            🛠️ පතිරගේ ඉලෙක්ට්‍රොනික්ස් - ඔබේ උපාංග සඳහා අපි ගෞරවයෙන් සැලකිය යුතුය
+        </div>
+    </div>
+
+    <!-- Complete Job Modal -->
+    <div id="completeModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">✅ අලුත්වැඩියාව සම්පූර්ණ කරන්න</h3>
+            <label>අලුත්වැඩියා මිල (LKR)</label>
+            <input type="number" id="modalPrice" min="0" step="0.01" placeholder="උදා: 1500.00">
+
+            <label>අලුත්වැඩියාවට අගයම් ගෙවීම (LKR)</label>
+            <input type="number" id="modalPaid" min="0" step="0.01" placeholder="උදා: 500.00">
+
+            <div class="modal-actions">
+                <button id="modalSaveBtn">💾 සුරකින්න & භාර ගැනීමට සූදානම් ලෙස සලකුණු කරන්න</button>
+                <button id="modalCancelBtn">❌ අවලංගු කරන්න</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">✏️ මිල සහ ගෙවීම සංස්කරණය කරන්න</h3>
+            <label>අලුත්වැඩියා මිල (LKR)</label>
+            <input type="number" id="editPrice" min="0" step="0.01" placeholder="උදා: 1500.00">
+
+            <label>ගෙවූ මුදල (LKR)</label>
+            <input type="number" id="editPaid" min="0" step="0.01" placeholder="උදා: 1000.00">
+
+            <div class="modal-actions">
+                <button id="editSaveBtn">💾 වෙනස්කම් සුරකින්න</button>
+                <button id="editCancelBtn">❌ අවලංගු කරන්න</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Job Modal -->
+    <div id="editJobModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">✏️ රැකියා විස්තර සංස්කරණය කරන්න</h3>
+            <input type="hidden" id="editJobId">
+            <label>බිල්පත් අංකය</label>
+            <input type="text" id="editJobNumber" readonly>
+            
+            <label>පාරිභෝගික නම</label>
+            <input type="text" id="editCustomerName" placeholder="උදා: නිරෝෂන් පෙරේරා">
+
+            <label>දුරකථන අංකය</label>
+            <input type="tel" id="editCustomerPhone" placeholder="උදා: 0712345678">
+
+            <label>ලිපිනය</label>
+            <textarea id="editCustomerAddress" rows="2" placeholder="ගෙයි අංකය, වීදිය, නගරය"></textarea>
+
+            <label>වෙළඳ නාමය</label>
+            <input type="text" id="editDeviceBrand" placeholder="උදා: Samsung, Apple, Dell">
+
+            <label>මාදිලිය</label>
+            <input type="text" id="editDeviceModel" placeholder="උදා: Galaxy S23, MacBook Pro">
+
+            <label>ගැටළුව විස්තර කරන්න</label>
+            <textarea id="editIssueDesc" rows="3" placeholder="ගැටළුව විස්තර කරන්න..."></textarea>
+
+            <label>අලුත්වැඩියා දිනය</label>
+            <input type="date" id="editRepairDate">
+
+            <label>අපේක්ෂිත භාරදීමේ දිනය</label>
+            <input type="date" id="editDeliveryDate">
+
+            <label>තත්ත්වය</label>
+            <select id="editStatus">
+                <option value="Pending">බලාපොරොත්තුවෙන්</option>
+                <option value="In Progress">ක්‍රියාවලියේ</option>
+                <option value="Ready for Pickup">භාර ගැනීමට සූදානම්</option>
+                <option value="Delivered">භාර දී ඇත</option>
+            </select>
+
+            <div class="modal-actions">
+                <button id="saveEditBtn">💾 වෙනස්කම් සුරකින්න</button>
+                <button id="cancelEditBtn">❌ අවලංගු කරන්න</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let jobs = JSON.parse(localStorage.getItem('repairJobs')) || [];
+        const saveBtn = document.getElementById('saveBtn');
+        const jobListEl = document.getElementById('jobList');
+        const exportBtn = document.getElementById('exportBtn');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const tabs = document.querySelectorAll('.tab');
+
+        // Modal Elements
+        const completeModal = document.getElementById('completeModal');
+        const paymentModal = document.getElementById('paymentModal');
+        const editJobModal = document.getElementById('editJobModal');
+
+        const modalPrice = document.getElementById('modalPrice');
+        const modalPaid = document.getElementById('modalPaid');
+        const editPrice = document.getElementById('editPrice');
+        const editPaid = document.getElementById('editPaid');
+
+        const editJobId = document.getElementById('editJobId');
+        const editJobNumber = document.getElementById('editJobNumber');
+        const editCustomerName = document.getElementById('editCustomerName');
+        const editCustomerPhone = document.getElementById('editCustomerPhone');
+        const editCustomerAddress = document.getElementById('editCustomerAddress');
+        const editDeviceBrand = document.getElementById('editDeviceBrand');
+        const editDeviceModel = document.getElementById('editDeviceModel');
+        const editIssueDesc = document.getElementById('editIssueDesc');
+        const editRepairDate = document.getElementById('editRepairDate');
+        const editDeliveryDate = document.getElementById('editDeliveryDate');
+        const editStatus = document.getElementById('editStatus');
+
+        const modalSaveBtn = document.getElementById('modalSaveBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+        const editSaveBtn = document.getElementById('editSaveBtn');
+        const editCancelBtn = document.getElementById('editCancelBtn');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+        const cancelEditBtn = document.getElementById('cancelEditBtn');
+
+        let currentJobId = null;
+        let currentTab = 'active'; // active | delivered | all
+
+        // Shop Info
+        const SHOP_NAME = "පතිරගේ ඉලෙක්ට්‍රොනික්ස්";
+        const HOTLINE = "070 607 7 607";
+
+        // Set today's date as default
+        document.getElementById('repairDate').valueAsDate = new Date();
+        document.getElementById('deliveryDate').valueAsDate = new Date(Date.now() + 86400000 * 3);
+
+        // Tab Switching
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentTab = tab.dataset.tab;
+                renderJobs(searchInput.value.trim());
+            });
+        });
+
+        // Generate next bill number
+        function generateJobNumber() {
+            const year = new Date().getFullYear();
+            let nextNumber = 1;
+
+            const currentYearJobs = jobs.filter(job => job.jobNumber && job.jobNumber.startsWith(`PE-${year}-`));
+            if (currentYearJobs.length > 0) {
+                const numbers = currentYearJobs.map(job => {
+                    const parts = job.jobNumber.split('-');
+                    return parseInt(parts[2]) || 0;
+                });
+                nextNumber = Math.max(...numbers) + 1;
+            }
+
+            return `PE-${year}-${nextNumber.toString().padStart(4, '0')}`;
+        }
+
+        // Generate RECEIVED SMS Text
+        function generateReceivedSMSText(customerName, deviceBrand, deviceModel, jobNumber) {
+            return `ආයුබෝවන් ${customerName},\n\n${SHOP_NAME} තෝරාගැනීමට ස්තූතියි!\nඔබේ ${deviceBrand} ${deviceModel} උපාංගය අලුත්වැඩියා සඳහා අප වෙත ලැබී ඇත.\n\n📌 ඔබේ බිල්පත් අංකය: ${jobNumber}\nඋපාංගය සූදානම් වූ විට අපි දන්වන්නෙමු.\n☎️ හොට්ලයින්: ${HOTLINE}\n\n— ${SHOP_NAME}`;
+        }
+
+        // Generate READY SMS Text
+        function generateReadySMSText(customerName, jobNumber, repairPrice, amountPaid) {
+            const balance = repairPrice - amountPaid;
+            let msg = `ආයුබෝවන් ${customerName},\n\n🎉 පුදුම පණිවිඩයක්! ඔබේ උපාංගය ${SHOP_NAME} හි භාර ගැනීමට සූදානම්!\n\n📌 බිල්පත් අංකය: ${jobNumber}\n💰 අලුත්වැඩියා මිල: Rs ${repairPrice.toFixed(2)}\n💵 අගයම් ගෙවීම: Rs ${amountPaid.toFixed(2)}\n💳 ගෙවිය යුතු ශේෂය: Rs ${balance.toFixed(2)}\n\nකරුණාකර ඔබේ උපාංගය භාර ගැනීමට ඉක්මනින් පැමිණෙන්න.\n☎️ හොට්ලයින්: ${HOTLINE}\nඅපව විශ්වාස කිරීමට ස්තූතියි!`;
+            return msg;
+        }
+
+        // Generate DELIVERED SMS Text
+        function generateDeliveredSMSText(customerName, jobNumber, repairPrice, amountPaid) {
+            const balance = repairPrice - amountPaid;
+            let msg = `ආයුබෝවන් ${customerName},\n\n✅ ඔබේ උපාංගය ${SHOP_NAME} වෙතින් සාර්ථකව භාර දී ඇත!\n\n📌 බිල්පත් අංකය: ${jobNumber}\n💰 සම්පූර්ණ මුදල: Rs ${repairPrice.toFixed(2)}\n💵 ගෙවූ මුදල: Rs ${amountPaid.toFixed(2)}\n${balance > 0 ? `💳 පවත්වා ගෙවිය යුතු ශේෂය: Rs ${balance.toFixed(2)}\n⚠️ කරුණාකර ඉක්මනින් ගෙවන්න.` : '✅ සම්පූර්ණයෙන් ගෙවා ඇත'}\n\nඅපව තෝරාගැනීමට ස්තූතියි!\n☎️ හොට්ලයින්: ${HOTLINE}\n\n— ${SHOP_NAME}`;
+            return msg;
+        }
+
+        // Generate Detailed SMS Text
+        function generateDetailedSMSText(job) {
+            const balance = job.repairPrice - job.amountPaid;
+            let msg = `ආයුබෝවන් ${job.customerName},\n\n`;
+            msg += `📌 බිල්පත් අංකය: ${job.jobNumber}\n`;
+            msg += `${SHOP_NAME} තෝරාගැනීමට ස්තූතියි!\n`;
+            msg += `උපාංගය: ${job.deviceBrand} ${job.deviceModel}\n`;
+            msg += `තත්ත්වය: ${job.status}\n`;
+            msg += `අලුත්වැඩියා මිල: Rs ${job.repairPrice.toFixed(2)}\n`;
+            msg += `ගෙවූ මුදල: Rs ${job.amountPaid.toFixed(2)}\n`;
+            msg += `ගෙවිය යුතු ශේෂය: Rs ${balance.toFixed(2)}\n\n`;
+            msg += `📍 ඔබේ උපාංගය භාර ගැනීමට අප වෙත පැමිණෙන්න.\n`;
+            msg += `☎️ සම්බන්ධ වන්න: ${HOTLINE}\n`;
+            msg += `🙏 ඔබේ විශ්වාසයට ස්තූතියි!`;
+            return msg;
+        }
+
+        // Send SMS
+        function sendSMS(phone, text) {
+            if (!phone) {
+                alert("⚠️ SMS යැවීමට දුරකථන අංකයක් නොමැත!");
+                return;
+            }
+
+            const encodedText = encodeURIComponent(text);
+            const smsUrl = `sms:${phone}?body=${encodedText}`;
+            window.location.href = smsUrl;
+        }
+
+        // Format as LKR
+        function formatLKR(amount) {
+            return new Intl.NumberFormat('si-LK', {
+                style: 'currency',
+                currency: 'LKR',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        // Get status color class
+        function getStatusClass(status) {
+            if (status === 'Delivered') return 'delivered';
+            if (status === 'Ready for Pickup') return 'ready';
+            if (status === 'In Progress') return 'progress';
+            return 'pending';
+        }
+
+        // Render Jobs
+        function renderJobs(filter = '') {
+            jobListEl.innerHTML = '';
+            if (jobs.length === 0) {
+                jobListEl.innerHTML = '<p>තවම රැකියා නොමැත. ඔබේ පළමු අලුත්වැඩියාව එක් කරන්න!</p>';
+                return;
+            }
+
+            let filteredJobs = jobs;
+
+            if (currentTab === 'active') {
+                filteredJobs = jobs.filter(job => job.status !== 'Delivered');
+            } else if (currentTab === 'delivered') {
+                filteredJobs = jobs.filter(job => job.status === 'Delivered');
+            }
+
+            if (filter) {
+                const term = filter.toLowerCase();
+                filteredJobs = filteredJobs.filter(job =>
+                    job.customerName.toLowerCase().includes(term) ||
+                    job.customerPhone.includes(term) ||
+                    (job.jobNumber && job.jobNumber.toLowerCase().includes(term))
+                );
+            }
+
+            // Sort by newest first
+            filteredJobs.sort((a, b) => b.id - a.id);
+
+            if (filteredJobs.length === 0) {
+                let message = "❌ රැකියා හමු නොවීය.";
+                if (currentTab === 'active') message = "❌ ක්‍රියාකාරී රැකියා හමු නොවීය.";
+                else if (currentTab === 'delivered') message = "❌ භාරදුන් භාණ්ඩ හමු නොවීය.";
+                else if (currentTab === 'all') message = "❌ සියලු රැකියා හමු නොවීය.";
+
+                jobListEl.innerHTML = `<p>${message}</p>`;
+                return;
+            }
+
+            filteredJobs.forEach(job => {
+                const balance = job.repairPrice - job.amountPaid;
+                let paymentStatus = "ගෙවා නැත";
+                let paymentClass = "unpaid";
+
+                if (balance <= 0 && job.repairPrice > 0) {
+                    paymentStatus = "ගෙවා ඇත";
+                    paymentClass = "paid";
+                } else if (job.amountPaid > 0) {
+                    paymentStatus = "අර්ධ ගෙවීම";
+                    paymentClass = "partial";
+                }
+
+                const jobEl = document.createElement('div');
+                jobEl.className = 'job';
+                jobEl.dataset.id = job.id;
+
+                jobEl.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                        <strong>👨‍🔧 ${job.customerName}</strong>
+                        <span class="job-number">${job.jobNumber}</span>
+                    </div>
+                    <strong>📞 ${job.customerPhone}</strong><br>
+                    <strong>🏠 ලිපිනය:</strong> ${job.customerAddress || 'N/A'}<br>
+                    <strong>📱 ${job.deviceBrand} ${job.deviceModel}</strong><br>
+                    <strong>❗ ගැටළුව:</strong> ${job.issueDesc || 'N/A'}<br>
+                    <strong>📅 ලැබුණු:</strong> ${job.repairDate} | <strong>🚚 අපේක්ෂිත:</strong> ${job.deliveryDate}<br>
+                    <strong>🏷️ තත්ත්වය:</strong> 
+                    <span class="job-status ${getStatusClass(job.status)}">
+                        ${job.status === 'Pending' ? 'බලාපොරොත්තුවෙන්' : 
+                          job.status === 'In Progress' ? 'ක්‍රියාවලියේ' : 
+                          job.status === 'Ready for Pickup' ? 'භාර ගැනීමට සූදානම්' : 'භාර දී ඇත'}
+                    </span><br>
+                    <strong>💰 මිල: ${formatLKR(job.repairPrice)} | ගෙවූ: ${formatLKR(job.amountPaid)} | ගෙවිය යුතු: ${formatLKR(balance)}</strong><br>
+                    <strong>💳 ගෙවීම:</strong> <span class="payment-status ${paymentClass}">${paymentStatus}</span><br>
+                    <small>💾 සුරැකුණු: ${job.createdAt}</small>
+                    <div class="job-actions" style="margin-top:10px; display:flex; flex-wrap:wrap; gap:5px;"></div>
+                    <hr>
+                `;
+
+                const actionsContainer = jobEl.querySelector('.job-actions');
+
+                // Complete Job Button
+                if (job.status !== 'Delivered' && job.status !== 'Ready for Pickup') {
+                    const completeBtn = document.createElement('button');
+                    completeBtn.className = 'complete-btn';
+                    completeBtn.textContent = '✅ අලුත්වැඩියාව සම්පූර්ණ කරන්න';
+                    completeBtn.addEventListener('click', () => {
+                        currentJobId = job.id;
+                        modalPrice.value = '';
+                        modalPaid.value = '';
+                        completeModal.style.display = 'flex';
+                        modalPrice.focus();
+                    });
+                    actionsContainer.appendChild(completeBtn);
+                }
+
+                // Mark as Delivered (only if Ready for Pickup)
+                if (job.status === 'Ready for Pickup') {
+                    const deliverBtn = document.createElement('button');
+                    deliverBtn.className = 'deliver-btn';
+                    deliverBtn.textContent = '📦 භාර දී ඇති ලෙස සලකුණු කරන්න';
+                    deliverBtn.addEventListener('click', () => {
+                        const foundJob = jobs.find(j => j.id === job.id);
+                        if (foundJob) {
+                            const balance = foundJob.repairPrice - foundJob.amountPaid;
+                            if (balance > 0) {
+                                alert("⚠️ සම්පූර්ණ ගෙවීම ලැබෙන තෙක් භාර දී ඇති ලෙස සලකුණු කළ නොහැක.");
+                                return;
+                            }
+                            foundJob.status = "Delivered";
+                            saveToStorage();
+                            renderJobs(searchInput.value.trim());
+
+                            const deliveredSMS = generateDeliveredSMSText(
+                                foundJob.customerName,
+                                foundJob.jobNumber,
+                                foundJob.repairPrice,
+                                foundJob.amountPaid
+                            );
+                            sendSMS(foundJob.customerPhone, deliveredSMS);
+
+                            alert(`✅ රැකියාව ${foundJob.jobNumber} භාර දී ඇති ලෙස සලකුණු කරන ලදි. SMS යවන ලදි.`);
+                        }
+                    });
+                    actionsContainer.appendChild(deliverBtn);
+                }
+
+                // Edit Price & Payment Button
+                const editPaymentBtn = document.createElement('button');
+                editPaymentBtn.className = 'edit-payment-btn';
+                editPaymentBtn.textContent = '✏️ මිල සහ ගෙවීම සංස්කරණය කරන්න';
+                editPaymentBtn.addEventListener('click', () => {
+                    currentJobId = job.id;
+                    const foundJob = jobs.find(j => j.id === job.id);
+                    if (foundJob) {
+                        editPrice.value = foundJob.repairPrice;
+                        editPaid.value = foundJob.amountPaid;
+                    }
+                    paymentModal.style.display = 'flex';
+                    editPrice.focus();
+                });
+                actionsContainer.appendChild(editPaymentBtn);
+
+                // Edit Job Details Button
+                const editBtn = document.createElement('button');
+                editBtn.className = 'edit-btn';
+                editBtn.textContent = '📝 රැකියා විස්තර සංස්කරණය කරන්න';
+                editBtn.addEventListener('click', () => {
+                    currentJobId = job.id;
+                    const foundJob = jobs.find(j => j.id === job.id);
+                    if (foundJob) {
+                        editJobId.value = foundJob.id;
+                        editJobNumber.value = foundJob.jobNumber;
+                        editCustomerName.value = foundJob.customerName;
+                        editCustomerPhone.value = foundJob.customerPhone;
+                        editCustomerAddress.value = foundJob.customerAddress;
+                        editDeviceBrand.value = foundJob.deviceBrand;
+                        editDeviceModel.value = foundJob.deviceModel;
+                        editIssueDesc.value = foundJob.issueDesc;
+                        editRepairDate.value = foundJob.repairDate;
+                        editDeliveryDate.value = foundJob.deliveryDate;
+                        editStatus.value = foundJob.status;
+                    }
+                    editJobModal.style.display = 'flex';
+                    editCustomerName.focus();
+                });
+                actionsContainer.appendChild(editBtn);
+
+                // Send SMS Button
+                const smsBtn = document.createElement('button');
+                smsBtn.className = 'sms-btn';
+                smsBtn.textContent = '📲 SMS යාවත්කාලීන කිරීම යවන්න';
+                if (!job.customerPhone) {
+                    smsBtn.disabled = true;
+                    smsBtn.style.opacity = 0.5;
+                }
+                smsBtn.addEventListener('click', () => {
+                    const foundJob = jobs.find(j => j.id === job.id);
+                    if (foundJob) {
+                        const smsText = generateDetailedSMSText(foundJob);
+                        sendSMS(foundJob.customerPhone, smsText);
+                    }
+                });
+                actionsContainer.appendChild(smsBtn);
+
+                jobListEl.appendChild(jobEl);
+            });
+        }
+
+        // Save Job + Auto-Generate Job Number + Auto-SMS
+        saveBtn.addEventListener('click', () => {
+            const jobNumber = generateJobNumber();
+
+            const job = {
+                id: Date.now(),
+                jobNumber: jobNumber,
+                customerName: document.getElementById('customerName').value.trim(),
+                customerPhone: document.getElementById('customerPhone').value.trim(),
+                customerAddress: document.getElementById('customerAddress').value.trim(),
+                deviceBrand: document.getElementById('deviceBrand').value.trim(),
+                deviceModel: document.getElementById('deviceModel').value.trim(),
+                issueDesc: document.getElementById('issueDesc').value.trim(),
+                repairPrice: 0,
+                amountPaid: 0,
+                repairDate: document.getElementById('repairDate').value,
+                deliveryDate: document.getElementById('deliveryDate').value,
+                status: document.getElementById('status').value,
+                createdAt: new Date().toLocaleString()
+            };
+
+            if (!job.customerName || !job.customerPhone || !job.deviceModel) {
+                alert("⚠️ කරුණාකර පාරිභෝගික නම, දුරකථන අංකය සහ උපාංග මාදිලිය පුරවන්න!");
+                return;
+            }
+
+            jobs.push(job);
+            saveToStorage();
+            renderJobs('');
+
+            const receivedSMS = generateReceivedSMSText(
+                job.customerName,
+                job.deviceBrand,
+                job.deviceModel,
+                job.jobNumber
+            );
+            sendSMS(job.customerPhone, receivedSMS);
+
+            resetForm();
+            alert(`✅ අලුත්වැඩියා රැකියාව ${job.jobNumber} සුරකින ලදි & පාරිභෝගිකයාට SMS යවන ලදි!`);
+        });
+
+        // Save from Complete Modal → Send SMS with Price & Payment
+        modalSaveBtn.addEventListener('click', () => {
+            if (!currentJobId) return;
+
+            const price = parseFloat(modalPrice.value) || 0;
+            const paid = parseFloat(modalPaid.value) || 0;
+
+            if (price < 0 || paid < 0) {
+                alert("⚠️ මිල සහ ගෙවීම 0 හෝ ධනාත්මක විය යුතුය.");
+                return;
+            }
+
+            const job = jobs.find(j => j.id === currentJobId);
+            if (job) {
+                job.repairPrice = price;
+                job.amountPaid = paid;
+                job.status = "Ready for Pickup";
+
+                saveToStorage();
+                renderJobs(searchInput.value.trim());
+
+                const readySMS = generateReadySMSText(
+                    job.customerName,
+                    job.jobNumber,
+                    job.repairPrice,
+                    job.amountPaid
+                );
+                sendSMS(job.customerPhone, readySMS);
+
+                alert("🎉 රැකියාව භාර ගැනීමට සූදානම් ලෙස සලකුණු කරන ලදි! ගෙවීම් විස්තර සමඟ SMS පාරිභෝගිකයාට යවන ලදි.");
+            }
+
+            completeModal.style.display = 'none';
+        });
+
+        // Save from Edit Payment Modal
+        editSaveBtn.addEventListener('click', () => {
+            if (!currentJobId) return;
+
+            const price = parseFloat(editPrice.value) || 0;
+            const paid = parseFloat(editPaid.value) || 0;
+
+            if (price < 0 || paid < 0) {
+                alert("⚠️ මිල සහ ගෙවීම 0 හෝ ධනාත්මක විය යුතුය.");
+                return;
+            }
+
+            const job = jobs.find(j => j.id === currentJobId);
+            if (job) {
+                job.repairPrice = price;
+                job.amountPaid = paid;
+                saveToStorage();
+                renderJobs(searchInput.value.trim());
+                alert("✅ මිල සහ ගෙවීම යාවත්කාලීන කරන ලදි!");
+            }
+
+            paymentModal.style.display = 'none';
+        });
+
+        // Save from Edit Job Modal — WITH PAYMENT VALIDATION FOR DELIVERED
+        saveEditBtn.addEventListener('click', () => {
+            if (!currentJobId) return;
+
+            const job = jobs.find(j => j.id === currentJobId);
+            if (job) {
+                job.customerName = editCustomerName.value.trim();
+                job.customerPhone = editCustomerPhone.value.trim();
+                job.customerAddress = editCustomerAddress.value.trim();
+                job.deviceBrand = editDeviceBrand.value.trim();
+                job.deviceModel = editDeviceModel.value.trim();
+                job.issueDesc = editIssueDesc.value.trim();
+                job.repairDate = editRepairDate.value;
+                job.deliveryDate = editDeliveryDate.value;
+                const newStatus = editStatus.value;
+
+                // Validate required fields
+                if (!job.customerName || !job.customerPhone || !job.deviceModel) {
+                    alert("⚠️ කරුණාකර පාරිභෝගික නම, දුරකථන අංකය සහ උපාංග මාදිලිය පුරවන්න!");
+                    return;
+                }
+
+                // If setting to "Delivered", enforce payment
+                if (newStatus === "Delivered") {
+                    const balance = job.repairPrice - job.amountPaid;
+                    if (balance > 0) {
+                        alert("⚠️ සම්පූර්ණ ගෙවීම ලැබෙන තෙක් 'භාර දී ඇත' ලෙස තත්ත්වය සකසා ගත නොහැක.");
+                        return;
+                    }
+
+                    // Send Delivered SMS
+                    const deliveredSMS = generateDeliveredSMSText(
+                        job.customerName,
+                        job.jobNumber,
+                        job.repairPrice,
+                        job.amountPaid
+                    );
+                    sendSMS(job.customerPhone, deliveredSMS);
+
+                    alert(`✅ රැකියාව භාර දී ඇති ලෙස සලකුණු කරන ලදි. පාරිභෝගිකයාට SMS යවන ලදි.`);
+                }
+
+                job.status = newStatus;
+                saveToStorage();
+                renderJobs(searchInput.value.trim());
+                alert("✅ රැකියා විස්තර යාවත්කාලීන කරන ලදි!");
+            }
+
+            editJobModal.style.display = 'none';
+        });
+
+        // Cancel Modals
+        modalCancelBtn.addEventListener('click', () => completeModal.style.display = 'none');
+        editCancelBtn.addEventListener('click', () => paymentModal.style.display = 'none');
+        cancelEditBtn.addEventListener('click', () => editJobModal.style.display = 'none');
+
+        // Close modals if click outside
+        window.addEventListener('click', (e) => {
+            if (e.target === completeModal) completeModal.style.display = 'none';
+            if (e.target === paymentModal) paymentModal.style.display = 'none';
+            if (e.target === editJobModal) editJobModal.style.display = 'none';
+        });
+
+        // Save to localStorage
+        function saveToStorage() {
+            localStorage.setItem('repairJobs', JSON.stringify(jobs));
+        }
+
+        // Reset Form
+        function resetForm() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+            document.getElementById('deviceBrand').value = '';
+            document.getElementById('deviceModel').value = '';
+            document.getElementById('issueDesc').value = '';
+            document.getElementById('status').value = 'Pending';
+            document.getElementById('repairDate').valueAsDate = new Date();
+            document.getElementById('deliveryDate').valueAsDate = new Date(Date.now() + 86400000 * 3);
+        }
+
+        // Export Jobs
+        exportBtn.addEventListener('click', () => {
+            if (jobs.length === 0) {
+                alert("අපනයනය කිරීමට රැකියා නොමැත!");
+                return;
+            }
+
+            const dataStr = JSON.stringify(jobs, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'pathirage-electronics-jobs-' + new Date().toISOString().slice(0,10) + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        // Search
+        searchBtn.addEventListener('click', () => {
+            renderJobs(searchInput.value.trim());
+        });
+
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+
+        // Clear Search
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            renderJobs('');
+        });
+
+        // Initialize
+        renderJobs();
+    </script>
+</body>
+</html>
