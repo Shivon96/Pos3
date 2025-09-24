@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pathirage Electronics POS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.18.6/umd/index.min.js"></script>
+    <style>
+        body {
+            padding-bottom: 70px;
+            background: #f8f9fa;
+            font-size: 14px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .section {
+            display: none;
+            padding: 15px;
+        }
+        .section.active {
+            display: block;
+        }
+        .mobile-tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #ddd;
+            display: flex;
+            z-index: 1000;
+        }
+        .mobile-tab {
+            flex: 1;
+            text-align: center;
+            padding: 10px 5px;
+            font-size: 0.9rem;
+            color: #666;
+            cursor: pointer;
+        }
+        .mobile-tab i {
+            display: block;
+            font-size: 1.4rem;
+            margin-bottom: 2px;
+        }
+        .mobile-tab.active {
+            color: #0d6efd;
+            background: #e7f1ff;
+        }
+        .card {
+            margin-bottom: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+            padding: 8px 16px;
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        h3, h4, h5 {
+            font-weight: 600;
+        }
+        .low-stock {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .receipt {
+            display: none;
+            max-width: 400px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        @media print {
+            body * { visibility: hidden; }
+            .receipt, .receipt * { visibility: visible; }
+            .receipt { position: absolute; left: 0; top: 0; width: 100%; }
+        }
+        .completed-job {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+        .completed-job .btn {
+            display: none;
+        }
+        .btn-sms {
+            background: #28a745;
+            color: white;
+        }
+        .btn-sms:hover {
+            background: #218838;
+        }
+        .btn-bt {
+            background: #0d6efd;
+            color: white;
+        }
+        .btn-bt:hover {
+            background: #0b5ed7;
+        }
+        .btn-refund {
+            background: #dc3545;
+            color: white;
+        }
+        .btn-refund:hover {
+            background: #bb2d3b;
+        }
+        .stat-card {
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        #bluetoothStatus {
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        .sinhala-header {
+            font-family: 'Iskoola Pota', 'Malithi Web', serif;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        .sinhala-footer {
+            font-family: 'Iskoola Pota', 'Malithi Web', serif;
+            font-size: 1rem;
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+        }
+        .action-btn {
+            height: 70px !important;
+            font-size: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .due-badge {
+            background: #ffc107;
+            color: #000;
+            font-weight: bold;
+        }
+        .video-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+            position: relative;
+        }
+        #videoElement {
+            width: 100%;
+            border-radius: 8px;
+        }
+        .scan-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 2px dashed #0d6efd;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .cart-item {
+            position: relative;
+            padding-right: 80px;
+        }
+        .cart-qty {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            text-align: center;
+        }
+        /* ========== READY FOR PICKUP CARDS ========== */
+        .bg-gradient {
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: white;
+        }
+        .bg-gradient .badge {
+            color: #28a745;
+            background: white;
+        }
+        .card-body {
+            transition: all 0.2s;
+        }
+        .card-body:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .cant-repair {
+            background: linear-gradient(135deg, #dc3545, #bb2d3b) !important;
+            color: white !important;
+        }
+        .cant-repair .badge {
+            background: white !important;
+            color: #dc3545 !important;
+        }
+    </style>
+    <style>
+        @font-face {
+            font-family: 'Iskoola Pota';
+            src: url(https://fonts.gstatic.com/s/iskoolapota/v11/3C7s8QZtYhj1t4op7wOeT9lY3kSJZv7Z5v2q7lqQ8w.woff2) format('woff2');
+        }
+    </style>
+</head>
+<body>
+
+<!-- Top Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <div class="sinhala-header text-white">ආයුබෝවන්</div>
+        <div class="text-white">Pathirage Electronics</div>
+        <small class="text-white d-block">Naranovita, Elpitiya | ☎️ 070 607 7 607</small>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid p-0">
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="section active">
+        <div class="row m-2">
+            <div class="col-6 mb-2">
+                <div class="card bg-primary text-white text-center py-3 stat-card">
+                    <div><h4 id="salesToday">Rs 0.00</h4><small>Sales Today</small></div>
+                </div>
+            </div>
+            <div class="col-6 mb-2">
+                <div class="card bg-success text-white text-center py-3 stat-card">
+                    <div><h4 id="pendingRepairs">0</h4><small>Pending Repairs</small></div>
+                </div>
+            </div>
+            <div class="col-6 mb-2">
+                <div class="card bg-warning text-dark text-center py-3 stat-card">
+                    <div><h4 id="lowStockItems">0</h4><small>Low Stock</small></div>
+                </div>
+            </div>
+            <div class="col-6 mb-2">
+                <div class="card bg-info text-white text-center py-3 stat-card">
+                    <div><h4 id="newCustomersToday">0</h4><small>New Customers</small></div>
+                </div>
+            </div>
+            <div class="col-6 mb-2">
+                <div class="card bg-danger text-white text-center py-3 stat-card">
+                    <div><h4 id="duePayments">0</h4><small>Due Payments</small></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="m-2">
+            <h5>📈 Daily & Monthly Profit</h5>
+            <div class="card p-3">
+                <div class="d-flex justify-content-between"><strong>Today's Profit:</strong> <span id="dailyProfit">Rs 0.00</span></div>
+                <div class="d-flex justify-content-between"><strong>This Month Profit:</strong> <span id="monthlyProfit">Rs 0.00</span></div>
+                <button class="btn btn-outline-danger btn-sm mt-2" onclick="clearTodaySales()">🧹 Clear Today's Sales</button>
+                <button class="btn btn-outline-secondary btn-sm mt-2" onclick="clearMonthSales()">📅 Clear This Month</button>
+            </div>
+        </div>
+
+        <div class="m-2 mt-4">
+            <h5 class="d-flex align-items-center">
+                <span class="badge bg-success me-2">🚀</span>
+                Ready for Pickup — Tap to Act!
+            </h5>
+            <div id="recentRepairsMobile"></div>
+            <div id="quickActionSheet" class="modal fade" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title" id="actionSheetTitle">Repair Job</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-3">
+                                <h3 id="actionSheetDevice" class="mb-1"></h3>
+                                <p class="text-muted mb-0" id="actionSheetCustomer"></p>
+                                <p class="text-muted small" id="actionSheetFee"></p>
+                                <p class="text-muted small" id="actionSheetDates"></p>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-success btn-lg" id="actionMarkComplete">
+                                    <i class="bi bi-check-circle"></i> Mark as Completed
+                                </button>
+                                <button class="btn btn-outline-primary btn-lg" id="actionSendSMS">
+                                    <i class="bi bi-chat-dots"></i> Send Pickup SMS
+                                </button>
+                                <button class="btn btn-outline-secondary" id="actionViewDetails">
+                                    <i class="bi bi-eye"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SALES / POS -->
+    <div id="sales" class="section">
+        <div class="m-2">
+            <div class="d-flex gap-2 mb-3">
+                <input type="text" id="searchItem" class="form-control" placeholder="Search item or scan barcode...">
+                <button class="btn btn-outline-primary" onclick="startBarcodeScanner()">📷 Scan</button>
+            </div>
+            <div id="itemResults" class="list-group mt-2" style="max-height: 150px; overflow-y: auto;"></div>
+
+            <h5 class="mt-3">🛒 Cart</h5>
+            <div id="cartItemsMobile" class="mb-3"></div>
+
+            <div class="card p-3 mb-3">
+                <div class="d-flex justify-content-between"><strong>Subtotal:</strong> <span id="subtotal">Rs 0.00</span></div>
+                <div class="d-flex justify-content-between"><strong>Due:</strong> <span id="dueAmount">Rs 0.00</span></div>
+                <div class="d-flex justify-content-between"><strong>Total:</strong> <span id="total">Rs 0.00</span></div>
+            </div>
+
+            <h5>💳 Checkout</h5>
+            <input type="text" id="customerPhone" class="form-control" placeholder="Customer Phone (required for SMS)">
+            <select id="paymentMethod" class="form-select">
+                <option value="cash">Cash</option>
+                <option value="card">Card</option>
+                <option value="cheque">Cheque</option>
+                <option value="advance">Advance</option>
+                <option value="due">Due Payment</option>
+                <option value="wallet">Wallet</option>
+            </select>
+            <input type="number" id="paymentAmount" class="form-control" placeholder="Payment Amount" step="0.01">
+            <div class="alert alert-info mt-2">Balance Due: <strong id="balanceDue">Rs 0.00</strong></div>
+            <button class="btn btn-success w-100 mt-2" onclick="showSaleOptions()">✅ Complete Sale</button>
+            <div id="bluetoothStatus" class="text-center text-muted">Connect Bluetooth Printer below</div>
+            <button class="btn btn-bt w-100 mt-2" onclick="connectBluetoothPrinter()">🖨️ Connect Bluetooth Printer</button>
+            <button class="btn btn-outline-secondary w-100 mt-2" onclick="manageCategories()">📁 Manage Categories</button>
+        </div>
+    </div>
+
+    <!-- REPAIR JOBS -->
+    <div id="repairs" class="section">
+        <div class="m-2">
+            <button class="btn btn-primary w-100 mb-3" data-bs-toggle="modal" data-bs-target="#newRepairModal">➕ New Repair Job</button>
+            <div class="btn-group w-100 mb-3" role="group">
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="renderRepairs('all')">All</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="renderRepairs('Received')">Received</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="renderRepairs('In Progress')">Progress</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="renderRepairs('Ready')">Ready</button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" onclick="renderRepairs('Completed')">Completed</button>
+                <button type="button" class="btn btn-outline-warning btn-sm" onclick="renderRepairs('Due')">Due</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" onclick="renderRepairs('CantRepair')">Can't Repair</button>
+            </div>
+            <div id="repairListMobile"></div>
+        </div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="inventory" class="section">
+        <div class="m-2">
+            <div class="d-flex gap-2 mb-3">
+                <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addProductModal">➕ Add Product</button>
+                <button class="btn btn-outline-primary" onclick="startBarcodeScanner()">📷 Scan Barcode</button>
+            </div>
+            <input type="text" id="searchInventory" class="form-control mb-3" placeholder="Search inventory...">
+            <div id="inventoryListMobile"></div>
+        </div>
+    </div>
+
+    <!-- CUSTOMERS -->
+    <div id="customers" class="section">
+        <div class="m-2">
+            <input type="text" id="searchCustomer" class="form-control mb-3" placeholder="Search customer...">
+            <div id="customerListMobile"></div>
+        </div>
+    </div>
+
+    <!-- DUE PAYMENTS -->
+    <div id="duePayments" class="section">
+        <div class="m-2">
+            <h5>💰 Due Payments</h5>
+            <ul class="nav nav-tabs mb-3">
+                <li class="nav-item"><a class="nav-link active" data-type="all">All</a></li>
+                <li class="nav-item"><a class="nav-link" data-type="sales">Sales</a></li>
+                <li class="nav-item"><a class="nav-link" data-type="repairs">Repairs</a></li>
+            </ul>
+            <div id="dueList"></div>
+        </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="reports" class="section">
+        <div class="m-2">
+            <div class="d-grid gap-2 mb-3">
+                <button class="btn btn-outline-primary" onclick="generateReport('sales')">📈 Sales Report</button>
+                <button class="btn btn-outline-secondary" onclick="generateReport('repairs')">🔧 Repair Report</button>
+                <button class="btn btn-outline-success" onclick="generateReport('profit')">💰 Profit Report</button>
+            </div>
+            <div id="reportOutput" class="card p-3" style="min-height: 200px;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Bottom Tab Bar (Mobile Navigation) -->
+<div class="mobile-tab-bar">
+    <div class="mobile-tab active" data-section="dashboard">
+        <i class="bi bi-house"></i>
+        <div>Home</div>
+    </div>
+    <div class="mobile-tab" data-section="sales">
+        <i class="bi bi-cart"></i>
+        <div>Sales</div>
+    </div>
+    <div class="mobile-tab" data-section="repairs">
+        <i class="bi bi-wrench"></i>
+        <div>Repairs</div>
+    </div>
+    <div class="mobile-tab" data-section="inventory">
+        <i class="bi bi-box"></i>
+        <div>Stock</div>
+    </div>
+    <div class="mobile-tab" data-section="duePayments">
+        <i class="bi bi-currency-dollar"></i>
+        <div>Due</div>
+    </div>
+</div>
+
+<!-- BARCODE SCANNER MODAL -->
+<div class="modal fade" id="barcodeModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📷 Barcode Scanner</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="video-container">
+                    <video id="videoElement" autoplay playsinline></video>
+                    <div class="scan-overlay"></div>
+                </div>
+                <div class="mt-3 text-center">
+                    <div id="scanResult" class="alert alert-success" style="display:none;"></div>
+                    <button class="btn btn-danger" onclick="stopScanner()">⏹️ Stop Scanner</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- SALE OPTIONS MODAL -->
+<div class="modal fade" id="saleOptionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">✅ Sale Completed</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <p><strong>Total: Rs <span id="modalTotal">0.00</span></strong></p>
+                <p>Choose action:</p>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary action-btn" onclick="executeSaleAction('print')">
+                        <i class="bi bi-printer"></i><br>Print Receipt
+                    </button>
+                    <button class="btn btn-outline-success action-btn" onclick="executeSaleAction('sms')">
+                        <i class="bi bi-chat-dots"></i><br>Send SMS
+                    </button>
+                    <button class="btn btn-success action-btn" onclick="executeSaleAction('both')">
+                        <i class="bi bi-printer"></i> + <i class="bi bi-chat-dots"></i><br>Print + SMS
+                    </button>
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RECEIPT TEMPLATE -->
+<div id="receiptTemplate" class="receipt">
+    <div class="sinhala-header text-center">ආයුබෝවන්</div>
+    <h4 class="text-center">PATHIRAGE ELECTRONICS</h4>
+    <p class="text-center">Naranovita, Elpitiya<br>Hotline: 070 607 7 607</p>
+    <hr>
+    <p class="text-end small">Invoice: <span id="receiptInvoice"></span><br>Date: <span id="receiptDate"></span></p>
+    <div id="receiptItems"></div>
+    <hr>
+    <div class="d-flex justify-content-between"><small>Subtotal</small> <small id="receiptSubtotal">Rs 0.00</small></div>
+    <div class="d-flex justify-content-between"><small>Due</small> <small id="receiptDue">Rs 0.00</small></div>
+    <div class="d-flex justify-content-between fw-bold"><small>Total</small> <small id="receiptTotal">Rs 0.00</small></div>
+    <div class="d-flex justify-content-between"><small>Payment</small> <small id="receiptPayment">-</small></div>
+    <div class="d-flex justify-content-between"><small>Balance Due</small> <small id="receiptBalanceDue">Rs 0.00</small></div>
+    <div class="sinhala-footer text-center">
+        පැමිණි ඔබට ස්තූතියි !
+    </div>
+</div>
+
+<!-- New Repair Modal -->
+<div class="modal fade" id="newRepairModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">New Repair Job</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="repairCustomerName" class="form-control mb-2" placeholder="Customer Name*" required>
+                <input type="text" id="repairCustomerPhone" class="form-control mb-2" placeholder="Phone*" required>
+                <input type="text" id="repairDeviceType" class="form-control mb-2" placeholder="Device Type (e.g., iPhone 13)*" required>
+                <textarea id="repairIssue" class="form-control mb-2" placeholder="Problem Description" rows="3"></textarea>
+                <input type="number" id="repairAdvance" class="form-control mb-2" placeholder="Advance Payment Received (LKR)" step="0.01" min="0">
+                <div class="mb-2">
+                    <label class="form-label">Pickup Date</label>
+                    <input type="date" id="repairPickDate" class="form-control">
+                </div>
+                <select id="repairStatus" class="form-select mb-2">
+                    <option value="Received">Received</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Ready">Ready for Pickup</option>
+                    <option value="Completed">Completed</option>
+                    <option value="CantRepair">Can't Repair</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveRepair()">Save Repair</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Product Modal -->
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen-sm-down">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Product</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="productSKU" class="form-control mb-2" placeholder="SKU / Barcode*" required>
+                <input type="text" id="productName" class="form-control mb-2" placeholder="Product Name*" required>
+                <select id="productCategory" class="form-select mb-2">
+                    <optgroup label="📱 Mobile">
+                        <option value="Mobile Screen">Mobile Screen</option>
+                        <option value="Mobile Battery">Mobile Battery</option>
+                        <option value="Charging Port">Charging Port</option>
+                        <option value="Back Camera">Back Camera</option>
+                        <option value="Front Camera">Front Camera</option>
+                        <option value="Speaker/Mic">Speaker / Microphone</option>
+                    </optgroup>
+                    <optgroup label="💻 Computer Hardware">
+                        <option value="CPU">CPU</option>
+                        <option value="Motherboard">Motherboard</option>
+                        <option value="RAM">RAM</option>
+                        <option value="SSD">SSD</option>
+                        <option value="HDD">HDD</option>
+                        <option value="GPU">Graphics Card</option>
+                    </optgroup>
+                    <optgroup label="🛠️ Power Tools">
+                        <option value="Drill Machine">Drill Machine</option>
+                        <option value="Angle Grinder">Angle Grinder</option>
+                        <option value="Circular Saw">Circular Saw</option>
+                    </optgroup>
+                    <optgroup label="🏠 Home Appliances">
+                        <option value="Rice Cooker">Rice Cooker</option>
+                        <option value="Blender">Blender</option>
+                        <option value="Electric Kettle">Electric Kettle</option>
+                        <option value="Iron">Iron</option>
+                    </optgroup>
+                    <optgroup label="⚡ Electrical">
+                        <option value="Wire Roll">Wire Roll</option>
+                        <option value="Cable">Electrical Cable</option>
+                        <option value="Switch">Switch</option>
+                        <option value="Socket">Socket</option>
+                    </optgroup>
+                    <optgroup label="📚 Book Shop">
+                        <option value="Notebook">Notebook</option>
+                        <option value="Pen">Pen</option>
+                        <option value="Pencil">Pencil</option>
+                    </optgroup>
+                    <optgroup label="🚗 Car Audio/Video">
+                        <option value="Car Stereo">Car Stereo</option>
+                        <option value="Car Speaker">Car Speaker</option>
+                        <option value="Subwoofer">Subwoofer</option>
+                    </optgroup>
+                    <optgroup label="🔌 Accessories">
+                        <option value="Charger">Charger</option>
+                        <option value="Power Bank">Power Bank</option>
+                        <option value="Cable">Cable (USB-C/Lightning)</option>
+                    </optgroup>
+                    <optgroup label="⚙️ Components">
+                        <option value="Resistor">Resistor</option>
+                        <option value="Capacitor">Capacitor</option>
+                        <option value="Diode">Diode</option>
+                        <option value="Transistor">Transistor</option>
+                        <option value="IC Chip">IC Chip</option>
+                    </optgroup>
+                </select>
+                <input type="number" id="productStock" class="form-control mb-2" placeholder="Stock Quantity" min="0" value="0">
+                <input type="number" id="productPrice" class="form-control mb-2" placeholder="Price (LKR)" step="0.01" min="0">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" onclick="saveProduct()">Add Product</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Categories Modal -->
+<div class="modal fade" id="categoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">📁 Manage Categories</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="categoryList"></div>
+                <hr>
+                <input type="text" id="newCategory" class="form-control mb-2" placeholder="New Category Name">
+                <button class="btn btn-success" onclick="addCategory()">➕ Add Category</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+// ========== DATA STORAGE ==========
+let inventory = JSON.parse(localStorage.getItem('inventory')) || [
+    { sku: 'SCR-IP13-BLK', name: 'iPhone 13 OLED Screen', category: 'Mobile Screen', stock: 5, price: 12000 },
+    { sku: 'BAT-SAM-GAL', name: 'Samsung Galaxy 4000mAh Battery', category: 'Mobile Battery', stock: 12, price: 4500 },
+    { sku: 'CHG-TYPEC-65W', name: 'Type-C 65W Fast Charger', category: 'Charger', stock: 2, price: 3800 },
+    { sku: 'RAM-DDR4-8GB', name: 'DDR4 8GB 2666MHz RAM', category: 'RAM', stock: 8, price: 8900 },
+    { sku: 'CAP-10uF', name: 'Electrolytic Capacitor 10uF', category: 'Capacitor', stock: 100, price: 25 },
+    { sku: 'IC-LM358', name: 'LM358 Dual Op-Amp IC', category: 'IC Chip', stock: 75, price: 80 },
+    { sku: 'DRILL-800W', name: '800W Electric Drill Machine', category: 'Drill Machine', stock: 4, price: 15500 },
+    { sku: 'RICECOOKER-1L', name: '1L Rice Cooker', category: 'Rice Cooker', stock: 6, price: 6800 },
+    { sku: 'NOTEBOOK-A4', name: 'A4 Size Notebook (100pg)', category: 'Notebook', stock: 50, price: 350 },
+    { sku: 'CAR-SPEAKER-6x9', name: '6x9 Car Speaker Pair', category: 'Car Speaker', stock: 7, price: 12500 }
+];
+
+let repairs = JSON.parse(localStorage.getItem('repairs')) || [];
+let sales = JSON.parse(localStorage.getItem('sales')) || [];
+let categories = JSON.parse(localStorage.getItem('categories')) || [
+    "Mobile Screen", "Mobile Battery", "Charger", "RAM", "SSD", "GPU", "Drill Machine",
+    "Rice Cooker", "Notebook", "Car Speaker", "Resistor", "Capacitor", "CPU", "Motherboard",
+    "Power Bank", "LED Bulb", "Textbook", "Air Fryer", "Inverter", "Keyboard"
+];
+
+// ========== BLUETOOTH PRINTER SUPPORT ==========
+let bluetoothDevice = null;
+let bluetoothWriter = null;
+
+async function connectBluetoothPrinter() {
+    if (!navigator.bluetooth) {
+        alert("❌ Bluetooth not supported in this browser. Use Chrome on Android/Desktop.");
+        return;
+    }
+
+    try {
+        bluetoothDevice = await navigator.bluetooth.requestDevice({
+            filters: [
+                { namePrefix: "EPSON" },
+                { namePrefix: "Zjiang" },
+                { namePrefix: "MHT" },
+                { namePrefix: "POS" },
+                { services: ['00001101-0000-1000-8000-00805f9b34fb'] }
+            ],
+            optionalServices: ['00001101-0000-1000-8000-00805f9b34fb']
+        });
+
+        const server = await bluetoothDevice.gatt.connect();
+        const service = await server.getPrimaryService('00001101-0000-1000-8000-00805f9b34fb');
+        const characteristic = await service.getCharacteristic('00001101-0000-1000-8000-00805f9b34fb');
+
+        bluetoothWriter = characteristic.writable ? characteristic : null;
+
+        if (bluetoothWriter) {
+            document.getElementById('bluetoothStatus').innerText = "✅ Connected: " + bluetoothDevice.name;
+            document.getElementById('bluetoothStatus').className = "text-center text-success";
+        } else {
+            throw new Error("Printer not writable");
+        }
+
+        bluetoothDevice.addEventListener('gattserverdisconnected', () => {
+            document.getElementById('bluetoothStatus').innerText = "⚠️ Printer disconnected";
+            document.getElementById('bluetoothStatus').className = "text-center text-danger";
+            bluetoothWriter = null;
+        });
+
+    } catch (error) {
+        console.error("Bluetooth connection failed:", error);
+        document.getElementById('bluetoothStatus').innerText = "❌ Connection failed: " + error.message;
+        document.getElementById('bluetoothStatus').className = "text-center text-danger";
+    }
+}
+
+async function printViaBluetooth(text) {
+    if (!bluetoothWriter) {
+        alert("⚠️ No Bluetooth printer connected. Please connect first.");
+        return false;
+    }
+
+    try {
+        let escpos = new Uint8Array([
+            0x1B, 0x40,
+            0x1B, 0x61, 0x01,
+            ...encodeText("ආයුබෝවන්\n"),
+            ...encodeText("PATHIRAGE ELECTRONICS\n"),
+            0x1B, 0x61, 0x00,
+            ...encodeText("Naranovita, Elpitiya\n"),
+            ...encodeText("Hotline: 070 607 7 607\n"),
+            0x1B, 0x21, 0x00,
+            ...encodeText("----------------------------\n"),
+            ...encodeText(text),
+            ...encodeText("----------------------------\n"),
+            ...encodeText("පැමිණි ඔබට ස්තූතියි !\n"),
+            0x1D, 0x56, 0x00,
+            0x0A, 0x0A
+        ]);
+
+        await bluetoothWriter.writeValue(escpos);
+        return true;
+    } catch (error) {
+        console.error("Print failed:", error);
+        alert("❌ Print failed: " + error.message);
+        return false;
+    }
+}
+
+function encodeText(text) {
+    let encoder = new TextEncoder();
+    return encoder.encode(text);
+}
+
+// ========== BARCODE SCANNER ==========
+let codeReader = null;
+let videoInputDevices = [];
+
+async function startBarcodeScanner() {
+    codeReader = new ZXing.BrowserMultiFormatReader();
+    
+    try {
+        videoInputDevices = await codeReader.getVideoInputDevices();
+        
+        if (videoInputDevices.length === 0) {
+            alert('No camera found!');
+            return;
+        }
+        
+        const selectedDeviceId = videoInputDevices[0].deviceId;
+        const videoElement = document.getElementById('videoElement');
+        
+        codeReader.decodeFromVideoDevice(selectedDeviceId, videoElement, (result, err) => {
+            if (result) {
+                handleScannedCode(result.getText());
+                stopScanner();
+            }
+            if (err && !(err instanceof ZXing.NotFoundException)) {
+                console.error(err);
+            }
+        });
+        
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('barcodeModal')).show();
+    } catch (err) {
+        console.error('Error starting scanner:', err);
+        alert('Error starting camera: ' + err.message);
+    }
+}
+
+function stopScanner() {
+    if (codeReader) {
+        codeReader.reset();
+        codeReader = null;
+    }
+    bootstrap.Modal.getInstance(document.getElementById('barcodeModal')).hide();
+}
+
+function handleScannedCode(code) {
+    const item = inventory.find(i => i.sku === code || i.name.toLowerCase().includes(code.toLowerCase()));
+    
+    if (item) {
+        if (document.getElementById('sales').classList.contains('active')) {
+            addToCart(item);
+            document.getElementById('searchItem').value = '';
+            document.getElementById('itemResults').innerHTML = '';
+            alert(`✅ Added to cart: ${item.name}`);
+        } else {
+            alert(`Found: ${item.name}\nPrice: Rs ${item.price}\nStock: ${item.stock}`);
+        }
+    } else {
+        alert(`❌ Item not found: ${code}`);
+    }
+}
+
+// ========== DUE PAYMENT TRACKING ==========
+function calculateDueAmount() {
+    const subtotal = parseFloat(document.getElementById('subtotal').innerText.replace('Rs ', '')) || 0;
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    const due = Math.max(0, subtotal - paymentAmount);
+    document.getElementById('dueAmount').innerText = `Rs ${due.toFixed(2)}`;
+    document.getElementById('balanceDue').innerText = `Rs ${due.toFixed(2)}`;
+    return due;
+}
+
+document.getElementById('paymentAmount').addEventListener('input', calculateDueAmount);
+
+// ========== TEMP SALE DATA ==========
+let currentSale = null;
+
+// ========== SHOW SALE OPTIONS MODAL ==========
+function showSaleOptions() {
+    const subtotal = parseFloat(document.getElementById('subtotal').innerText.replace('Rs ', '')) || 0;
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+    const customerPhone = document.getElementById('customerPhone').value.trim();
+    const due = Math.max(0, subtotal - paymentAmount);
+
+    if (cart.length === 0) return alert('Cart is empty!');
+
+    currentSale = {
+        items: [...cart],
+        subtotal: subtotal,
+        paymentMethod: paymentMethod,
+        paymentAmount: paymentAmount,
+        due: due,
+        customerPhone: customerPhone,
+        id: sales.length ? Math.max(...sales.map(s => s.id)) + 1 : 1,
+        date: new Date().toISOString()
+    };
+
+    document.getElementById('modalTotal').innerText = subtotal.toFixed(2);
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('saleOptionsModal')).show();
+}
+
+// ========== EXECUTE SELECTED ACTION ==========
+async function executeSaleAction(action) {
+    if (!currentSale) return;
+
+    // Deduct stock & save sale
+    cart.forEach(item => {
+        const invItem = inventory.find(i => i.sku === item.sku);
+        if (invItem) invItem.stock -= item.qty;
+    });
+
+    const finalSale = {
+        id: currentSale.id,
+        items: currentSale.items,
+        subtotal: currentSale.subtotal,
+        paymentMethod: currentSale.paymentMethod,
+        paymentAmount: currentSale.paymentAmount,
+        due: currentSale.due,
+        customerPhone: currentSale.customerPhone,
+        date: currentSale.date,
+        status: currentSale.due > 0 ? 'Due' : 'Paid'
+    };
+
+    sales.push(finalSale);
+    
+    if (finalSale.due > 0) {
+        const dues = JSON.parse(localStorage.getItem('dues')) || [];
+        dues.push({
+            id: dues.length ? Math.max(...dues.map(d => d.id)) + 1 : 1,
+            type: 'sale',
+            referenceId: finalSale.id,
+            customerPhone: finalSale.customerPhone,
+            amount: finalSale.due,
+            date: finalSale.date,
+            status: 'Pending'
+        });
+        localStorage.setItem('dues', JSON.stringify(dues));
+    }
+
+    // Save data
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+    localStorage.setItem('sales', JSON.stringify(sales));
+
+    // Execute actions
+    if (action === 'print' || action === 'both') {
+        let receiptText = `Invoice: INV-${String(finalSale.id).padStart(5, '0')}\n`;
+        receiptText += `Date: ${new Date(finalSale.date).toLocaleString('en-LK')}\n`;
+        receiptText += `----------------------------\n`;
+        finalSale.items.forEach(item => {
+            receiptText += `${item.name} x${item.qty}\n`;
+            receiptText += `       Rs ${(item.price * item.qty).toFixed(2)}\n`;
+        });
+        receiptText += `----------------------------\n`;
+        receiptText += `SUBTOTAL:     Rs ${finalSale.subtotal.toFixed(2)}\n`;
+        receiptText += `PAYMENT:      Rs ${finalSale.paymentAmount.toFixed(2)}\n`;
+        receiptText += `DUE:          Rs ${finalSale.due.toFixed(2)}\n`;
+        receiptText += `STATUS:       ${finalSale.status}\n`;
+
+        const printed = await printViaBluetooth(receiptText);
+        if (!printed) {
+            printReceipt(finalSale);
+        }
+    }
+
+    if (action === 'sms' || action === 'both') {
+        if (currentSale.customerPhone) {
+            let message = `Thank you for your purchase at Pathirage Electronics!\n\n`;
+            message += `Subtotal: Rs ${finalSale.subtotal.toFixed(2)}\n`;
+            message += `Paid: Rs ${finalSale.paymentAmount.toFixed(2)}\n`;
+            if (finalSale.due > 0) {
+                message += `DUE: Rs ${finalSale.due.toFixed(2)}\n`;
+                message += `Please settle the balance at your convenience.\n`;
+            }
+            message += `\nපැමිණි ඔබට ස්තූතියි !\n\n`;
+            message += `Hotline: 070 607 7 607`;
+
+            sendSaleSMS(currentSale.customerPhone, message);
+        }
+    }
+
+    // Close modal & RESET UI
+    bootstrap.Modal.getInstance(document.getElementById('saleOptionsModal')).hide();
+    
+    // 🔄 AUTO-CLEAR & REFRESH
+    cart = [];
+    renderCart();
+    renderInventory();
+    updateDashboardStats();
+    currentSale = null;
+
+    // ✅ CLEAR CHECKOUT FIELDS
+    document.getElementById('customerPhone').value = '';
+    document.getElementById('paymentAmount').value = '';
+    document.getElementById('paymentMethod').selectedIndex = 0;
+    document.getElementById('balanceDue').innerText = 'Rs 0.00';
+
+    if (action !== 'cancel') {
+        alert(`✅ Sale completed successfully! ${finalSale.due > 0 ? 'Balance due recorded.' : ''}`);
+    }
+}
+
+// ========== CATEGORY MANAGEMENT ==========
+function loadCategories() {
+    const select = document.getElementById('productCategory');
+    select.innerHTML = '';
+    categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        select.appendChild(opt);
+    });
+}
+
+function manageCategories() {
+    const container = document.getElementById('categoryList');
+    container.innerHTML = '<h6>Existing Categories</h6>';
+
+    categories.forEach((cat, index) => {
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `
+            <input type="text" class="form-control" value="${cat}" data-index="${index}">
+            <button class="btn btn-outline-danger" type="button" onclick="deleteCategory(${index})">🗑️</button>
+        `;
+        container.appendChild(div);
+    });
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('categoryModal')).show();
+}
+
+function addCategory() {
+    const input = document.getElementById('newCategory');
+    const name = input.value.trim();
+    if (!name) return alert('Please enter category name!');
+    if (categories.includes(name)) return alert('Category already exists!');
+
+    categories.push(name);
+    localStorage.setItem('categories', JSON.stringify(categories));
+    loadCategories();
+    input.value = '';
+    alert('✅ Category added!');
+    renderCategoryList();
+}
+
+function deleteCategory(index) {
+    if (confirm('Delete this category? Items using it will remain.')) {
+        categories.splice(index, 1);
+        localStorage.setItem('categories', JSON.stringify(categories));
+        loadCategories();
+        renderCategoryList();
+    }
+}
+
+function renderCategoryList() {
+    const container = document.getElementById('categoryList');
+    container.innerHTML = '<h6>Existing Categories</h6>';
+    categories.forEach((cat, index) => {
+        const div = document.createElement('div');
+        div.className = 'input-group mb-2';
+        div.innerHTML = `
+            <input type="text" class="form-control" value="${cat}" data-index="${index}">
+            <button class="btn btn-outline-danger" type="button" onclick="deleteCategory(${index})">🗑️</button>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ========== SMS FUNCTIONS ==========
+function sendSaleSMS(phone, message) {
+    if (!phone) return;
+    const encodedMessage = encodeURIComponent(message);
+    const smsUrl = `sms:${phone}?body=${encodedMessage}`;
+    window.location.href = smsUrl;
+}
+
+function sendDueReminderSMS(phone, amount, type, referenceId) {
+    if (!phone) return;
+    
+    let message = `REMINDER: You have a pending payment at Pathirage Electronics!\n\n`;
+    message += `Amount Due: Rs ${amount.toFixed(2)}\n`;
+    message += `Reference: ${type === 'sale' ? 'Sale #' : 'Repair #'}${referenceId}\n`;
+    message += `Please settle at your convenience.\n\n`;
+    message += `Hotline: 070 607 7 607`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const smsUrl = `sms:${phone}?body=${encodedMessage}`;
+    window.location.href = smsUrl;
+}
+
+// ========== INIT APP ==========
+document.addEventListener('DOMContentLoaded', function() {
+    loadCategories();
+    updateDashboardStats();
+    renderInventory();
+    renderRepairs('all');
+    setupDuePaymentsTab();
+    setupNavigation();
+});
+
+function setupNavigation() {
+    document.querySelectorAll('.mobile-tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+            document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            const section = this.dataset.section;
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.getElementById(section).classList.add('active');
+        });
+    });
+
+    // Real-time search
+    let searchTimeout;
+    document.getElementById('searchItem').addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            searchItems(this.value);
+        }, 100);
+    });
+    
+    document.getElementById('searchInventory').addEventListener('input', function() {
+        renderInventory(this.value);
+    });
+    
+    document.getElementById('searchCustomer').addEventListener('input', renderCustomers);
+
+    // Due payments tab
+    document.querySelectorAll('[data-type]').forEach(link => {
+        link.addEventListener('click', function() {
+            document.querySelectorAll('[data-type]').forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            renderDuePayments(this.dataset.type);
+        });
+    });
+}
+
+// ========== DUE PAYMENTS TAB ==========
+function setupDuePaymentsTab() {
+    renderDuePayments('all');
+}
+
+function renderDuePayments(type = 'all') {
+    const container = document.getElementById('dueList');
+    container.innerHTML = '';
+    const dues = JSON.parse(localStorage.getItem('dues')) || [];
+    
+    let filtered = [...dues];
+    
+    if (type !== 'all') {
+        filtered = dues.filter(d => d.type === type);
+    }
+    
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">No due payments found.</div>';
+        return;
+    }
+
+    filtered.forEach(due => {
+        const div = document.createElement('div');
+        div.className = 'card p-3 mb-2';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${due.type === 'sale' ? 'Sale' : 'Repair'} #${due.referenceId}</strong><br>
+                    <small>Rs ${due.amount.toFixed(2)} due</small><br>
+                    <small>${new Date(due.date).toLocaleDateString()}</small>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary" onclick="sendDueReminder(${due.id})">📲 SMS</button>
+                    <button class="btn btn-sm btn-success" onclick="markAsPaid(${due.id})">✅ Paid</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function sendDueReminder(dueId) {
+    const dues = JSON.parse(localStorage.getItem('dues')) || [];
+    const due = dues.find(d => d.id === dueId);
+    if (due && due.customerPhone) {
+        sendDueReminderSMS(due.customerPhone, due.amount, due.type, due.referenceId);
+    }
+}
+
+function markAsPaid(dueId) {
+    let dues = JSON.parse(localStorage.getItem('dues')) || [];
+    const dueIndex = dues.findIndex(d => d.id === dueId);
+    if (dueIndex !== -1) {
+        dues.splice(dueIndex, 1);
+        localStorage.setItem('dues', JSON.stringify(dues));
+        renderDuePayments(document.querySelector('[data-type].active')?.dataset.type || 'all');
+        updateDashboardStats();
+        alert('✅ Payment marked as paid!');
+    }
+}
+
+// ========== CLEAR STATS ==========
+function clearTodaySales() {
+    const today = new Date().toDateString();
+    sales = sales.filter(s => new Date(s.date).toDateString() !== today);
+    localStorage.setItem('sales', JSON.stringify(sales));
+    updateDashboardStats();
+    alert('✅ Today’s sales cleared from dashboard.');
+}
+
+function clearMonthSales() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    sales = sales.filter(s => new Date(s.date) < firstDay);
+    localStorage.setItem('sales', JSON.stringify(sales));
+    updateDashboardStats();
+    alert('✅ This month’s sales cleared from dashboard.');
+}
+
+// ========== REAL-TIME STATS ==========
+function updateDashboardStats() {
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const todaySales = sales
+        .filter(s => new Date(s.date).toDateString() === todayStr)
+        .reduce((sum, s) => sum + s.subtotal, 0);
+    document.getElementById('salesToday').innerText = `Rs ${todaySales.toFixed(2)}`;
+
+    const pending = repairs.filter(r => r.status !== 'Completed' && r.status !== 'CantRepair').length;
+    document.getElementById('pendingRepairs').innerText = pending;
+
+    const lowStock = inventory.filter(i => i.stock < 3).length;
+    document.getElementById('lowStockItems').innerText = lowStock;
+
+    const todayPhones = new Set();
+    repairs
+        .filter(r => new Date(r.createdAt).toDateString() === todayStr)
+        .forEach(r => todayPhones.add(r.phone));
+    sales
+        .filter(s => new Date(s.date).toDateString() === todayStr && s.customerPhone)
+        .forEach(s => todayPhones.add(s.customerPhone));
+    document.getElementById('newCustomersToday').innerText = todayPhones.size;
+
+    const dailyProfit = todaySales;
+    document.getElementById('dailyProfit').innerText = `Rs ${dailyProfit.toFixed(2)}`;
+
+    const monthSales = sales
+        .filter(s => new Date(s.date) >= firstDayOfMonth)
+        .reduce((sum, s) => sum + s.subtotal, 0);
+    document.getElementById('monthlyProfit').innerText = `Rs ${monthSales.toFixed(2)}`;
+
+    const dues = JSON.parse(localStorage.getItem('dues')) || [];
+    const dueCount = dues.length;
+    document.getElementById('duePayments').innerText = dueCount;
+}
+
+// ✅ ========== SEARCH ITEMS ==========
+function searchItems(query) {
+    const results = document.getElementById('itemResults');
+    results.innerHTML = '';
+    if (!query) return;
+
+    const matches = inventory.filter(item =>
+        item.name.toLowerCase().includes(query.toLowerCase()) ||
+        item.sku.toLowerCase().includes(query.toLowerCase())
+    );
+
+    if (matches.length === 0) {
+        results.innerHTML = '<div class="list-group-item text-muted">No items found</div>';
+        return;
+    }
+
+    matches.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'list-group-item list-group-item-action';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small class="text-muted">${item.category}</small>
+                </div>
+                <div class="text-end">
+                    Rs ${item.price.toFixed(2)}<br>
+                    <small class="${item.stock < 3 ? 'text-danger' : ''}">Stock: ${item.stock}</small>
+                </div>
+            </div>
+        `;
+        div.onclick = function() {
+            addToCart(item);
+            document.getElementById('searchItem').value = '';
+            results.innerHTML = '';
+        };
+        results.appendChild(div);
+    });
+}
+
+// ========== SMS FOR REPAIRS ==========
+function sendNativeSMS(phone, message) {
+    if (!phone) return;
+    const encodedMessage = encodeURIComponent(message);
+    const smsUrl = `sms:${phone}?body=${encodedMessage}`;
+    window.location.href = smsUrl;
+}
+
+function triggerRepairSMS(repair, status, force = false) {
+    if (!repair.phone) return;
+
+    let message = "";
+    const advance = parseFloat(repair.advance || 0).toFixed(2);
+    const fee = parseFloat(repair.estimatedCost || 0).toFixed(2);
+    const ticket = `RPR-${String(repair.id).padStart(4, '0')}`;
+    const shopInfo = "Pathirage Electronics, Naranovita, Elpitiya\nHotline: 070 607 7 607";
+
+    switch (status) {
+        case 'Received':
+            message = `Hi ${repair.customerName}, we've received your ${repair.deviceType} for repair.\n`;
+            if (advance > 0) message += `Advance Paid: Rs ${advance}\n`;
+            if (repair.pickDate) {
+                const pickDate = new Date(repair.pickDate).toLocaleDateString();
+                message += `Pickup Date: ${pickDate}\n`;
+            }
+            message += `Ticket ID: ${ticket}\nWe'll notify you once diagnosis is complete.\n\n${shopInfo}`;
+            break;
+        case 'Ready':
+            message = `Hi ${repair.customerName}, your ${repair.deviceType} is READY for pickup!\n`;
+            if (fee > 0) message += `Final Fee: Rs ${fee}\n`;
+            if (advance > 0) message += `Advance Paid: Rs ${advance}\nBalance Due: Rs ${(parseFloat(fee) - parseFloat(advance)).toFixed(2)}\n`;
+            if (repair.pickDate) {
+                const pickDate = new Date(repair.pickDate).toLocaleDateString();
+                message += `Pickup Date: ${pickDate}\n`;
+            }
+            if (repair.deliveryDate) {
+                const deliveryDate = new Date(repair.deliveryDate).toLocaleDateString();
+                message += `Delivery Date: ${deliveryDate}\n`;
+            }
+            message += `Ticket ID: ${ticket}\nPlease visit us soon.\n\n${shopInfo}`;
+            break;
+        case 'Completed':
+            message = `Hi ${repair.customerName}, your ${repair.deviceType} repair is now COMPLETED. Thank you for trusting us!\n`;
+            if (fee > 0) message += `Total Paid: Rs ${fee}\n`;
+            message += `Ticket ID: ${ticket}\nWe’re always here for your future needs!\n\n${shopInfo}`;
+            break;
+        case 'CantRepair':
+            message = `Hi ${repair.customerName}, we're sorry but after inspection we cannot repair your ${repair.deviceType}.\n`;
+            if (advance > 0) {
+                message += `Your advance payment of Rs ${advance} will be refunded.\n`;
+            }
+            message += `Please contact us to collect your device.\n`;
+            message += `Ticket ID: ${ticket}\n\n${shopInfo}`;
+            break;
+        default:
+            if (!force) return;
+            message = `Hi ${repair.customerName}, your repair status: ${status}.\nDevice: ${repair.deviceType}\nTicket: ${ticket}\n\n${shopInfo}`;
+    }
+
+    sendNativeSMS(repair.phone, message);
+}
+
+// ========== DASHBOARD RENDER — REAL-TIME READY FOR PICKUP ==========
+function renderDashboard() {
+    const readyRepairs = repairs.filter(r => r.status === 'Ready');
+    const container = document.getElementById('recentRepairsMobile');
+    
+    if (readyRepairs.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4 text-muted">
+                <i class="bi bi-check-circle" style="font-size: 2rem;"></i>
+                <h6 class="mt-2">No items ready for pickup</h6>
+                <p class="small">Repairs will appear here when marked "Ready"</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = '';
+    
+    readyRepairs.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'card mb-3 border-0 shadow-sm';
+        div.style = 'border-radius: 16px; overflow: hidden; transition: transform 0.2s;';
+        div.innerHTML = `
+            <div class="card-body p-4 bg-gradient" style="background: linear-gradient(135deg, #28a745, #218838); color: white;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="mb-1">#${String(r.id).padStart(4, '0')}</h5>
+                        <h6 class="mb-2">${r.customerName}</h6>
+                        <p class="mb-1">${r.deviceType}</p>
+                        ${r.estimatedCost ? `<p class="mb-1">Fee: Rs ${parseFloat(r.estimatedCost).toFixed(2)}</p>` : ''}
+                        ${r.pickDate ? `<p class="mb-0 small">Pick: ${new Date(r.pickDate).toLocaleDateString()}</p>` : ''}
+                        ${r.deliveryDate ? `<p class="mb-0 small">Deliver: ${new Date(r.deliveryDate).toLocaleDateString()}</p>` : ''}
+                    </div>
+                    <div class="text-end">
+                        <div class="badge bg-white text-success mb-2">READY</div>
+                        <i class="bi bi-chevron-right" style="font-size: 1.5rem; opacity: 0.8;"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        div.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.98)';
+        });
+        div.addEventListener('touchend', function() {
+            this.style.transform = 'scale(1)';
+        });
+        
+        div.addEventListener('click', function() {
+            showQuickActionSheet(r);
+        });
+        
+        container.appendChild(div);
+    });
+}
+
+// ✅ ========== QUICK ACTION SHEET ==========
+function showQuickActionSheet(repair) {
+    const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('quickActionSheet'));
+    document.getElementById('actionSheetTitle').innerText = `Repair #${String(repair.id).padStart(4, '0')}`;
+    document.getElementById('actionSheetDevice').innerText = repair.deviceType;
+    document.getElementById('actionSheetCustomer').innerText = repair.customerName;
+    document.getElementById('actionSheetFee').innerText = repair.estimatedCost ? `Fee: Rs ${parseFloat(repair.estimatedCost).toFixed(2)}` : 'Fee not set';
+    
+    let datesText = '';
+    if (repair.pickDate) {
+        datesText += `Pickup: ${new Date(repair.pickDate).toLocaleDateString()}\n`;
+    }
+    if (repair.deliveryDate) {
+        datesText += `Delivery: ${new Date(repair.deliveryDate).toLocaleDateString()}`;
+    }
+    document.getElementById('actionSheetDates').innerText = datesText;
+    
+    document.getElementById('actionMarkComplete').onclick = function() {
+        updateRepairStatus(repair.id, 'Completed');
+        modal.hide();
+    };
+    
+    document.getElementById('actionSendSMS').onclick = function() {
+        triggerRepairSMS(repair, 'Ready', true);
+        modal.hide();
+    };
+    
+    document.getElementById('actionViewDetails').onclick = function() {
+        modal.hide();
+        document.querySelectorAll('.mobile-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('[data-section="repairs"]').classList.add('active');
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.getElementById('repairs').classList.add('active');
+        
+        setTimeout(() => {
+            renderRepairs('Ready');
+            const repairElement = document.querySelector(`[data-repair-id="${repair.id}"]`);
+            if (repairElement) {
+                repairElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                repairElement.style.backgroundColor = '#fff3cd';
+                setTimeout(() => {
+                    repairElement.style.backgroundColor = '';
+                }, 2000);
+            }
+        }, 300);
+    };
+    
+    modal.show();
+}
+
+// ========== INVENTORY ==========
+function renderInventory(searchTerm = '') {
+    const container = document.getElementById('inventoryListMobile');
+    container.innerHTML = '';
+    const filtered = inventory.filter(item =>
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.sku.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">No products found.</div>';
+        return;
+    }
+
+    filtered.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'card p-3';
+        const stockClass = item.stock < 3 ? 'text-danger fw-bold' : '';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small class="text-muted">${item.category}</small><br>
+                    <small>Rs ${item.price.toFixed(2)}</small>
+                </div>
+                <div class="text-end">
+                    <div class="${stockClass}">${item.stock}</div>
+                    <small>in stock</small>
+                </div>
+            </div>
+            <div class="d-grid gap-2 mt-2">
+                <button class="btn btn-sm btn-outline-warning" onclick="editStock('${item.sku}')">✏️ Edit Stock</button>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function saveProduct() {
+    const sku = document.getElementById('productSKU').value.trim();
+    const name = document.getElementById('productName').value.trim();
+    const category = document.getElementById('productCategory').value;
+    const stock = parseInt(document.getElementById('productStock').value) || 0;
+    const price = parseFloat(document.getElementById('productPrice').value) || 0;
+
+    if (!sku || !name) return alert('Please fill required fields!');
+
+    inventory.push({ 
+        sku: sku, 
+        name: name, 
+        category: category, 
+        stock: stock, 
+        price: price 
+    });
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+    renderInventory();
+    updateDashboardStats();
+
+    bootstrap.Modal.getInstance(document.getElementById('addProductModal')).hide();
+    document.getElementById('addProductModal').querySelector('form').reset();
+}
+
+function editStock(sku) {
+    const item = inventory.find(i => i.sku === sku);
+    const newStock = prompt(`Current stock: ${item.stock}\nEnter new stock for "${item.name}":`, item.stock);
+    if (newStock !== null && !isNaN(newStock)) {
+        item.stock = parseInt(newStock);
+        localStorage.setItem('inventory', JSON.stringify(inventory));
+        renderInventory();
+        updateDashboardStats();
+    }
+}
+
+// ========== REPAIRS ==========
+function renderRepairs(statusFilter = 'all') {
+    const container = document.getElementById('repairListMobile');
+    container.innerHTML = '';
+
+    let filtered = [];
+    if (statusFilter === 'all') {
+        filtered = [...repairs];
+    } else if (statusFilter === 'Due') {
+        filtered = repairs.filter(r => {
+            const fee = parseFloat(r.estimatedCost || 0);
+            const advance = parseFloat(r.advance || 0);
+            return fee > advance && r.status === 'Ready';
+        });
+    } else {
+        filtered = repairs.filter(r => r.status === statusFilter);
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">No repair jobs found.</div>';
+        return;
+    }
+
+    filtered.forEach(r => {
+        const div = document.createElement('div');
+        div.setAttribute('data-repair-id', r.id);
+        let cardClass = 'card p-3 mb-2';
+        if (r.status === 'Completed') {
+            cardClass += ' completed-job';
+        }
+        if (r.status === 'CantRepair') {
+            cardClass += ' cant-repair';
+        }
+        div.className = cardClass;
+
+        const advance = parseFloat(r.advance || 0);
+        const fee = parseFloat(r.estimatedCost || 0);
+        let feeText = "";
+        if (fee > 0) feeText = `Fee: Rs ${fee.toFixed(2)}`;
+        if (advance > 0 && r.status !== 'Completed' && r.status !== 'CantRepair') feeText += ` | Adv: Rs ${advance.toFixed(2)}`;
+        if (fee > advance && r.status === 'Ready') feeText += ` | Due: Rs ${(fee - advance).toFixed(2)}`;
+
+        let dateText = "";
+        if (r.pickDate) {
+            dateText += `Pick: ${new Date(r.pickDate).toLocaleDateString()}`;
+        }
+        if (r.deliveryDate) {
+            dateText += ` | Deliver: ${new Date(r.deliveryDate).toLocaleDateString()}`;
+        }
+
+        div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <strong>RPR-${String(r.id).padStart(4, '0')}</strong>
+                <span class="badge bg-${getBadgeClass(r.status)}">${r.status}</span>
+            </div>
+            <div class="mt-1">
+                <div>${r.customerName}</div>
+                <div class="text-muted small">${r.deviceType}</div>
+                ${feeText ? `<div class="text-muted small">${feeText}</div>` : ''}
+                ${dateText ? `<div class="text-muted small">${dateText}</div>` : ''}
+            </div>
+            <div class="action-buttons mt-2">
+                ${renderRepairButtons(r)}
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function getBadgeClass(status) {
+    const map = {
+        'Received': 'secondary',
+        'In Progress': 'warning',
+        'Ready': 'success',
+        'Completed': 'primary',
+        'CantRepair': 'danger'
+    };
+    return map[status] || 'secondary';
+}
+
+function renderRepairButtons(r) {
+    if (r.status === 'Completed' || r.status === 'CantRepair') {
+        return `<div class="alert alert-success small mb-0">✅ Job locked. No further actions.</div>`;
+    }
+
+    let buttons = [];
+
+    if (r.status !== 'In Progress') {
+        buttons.push(`<button class="btn btn-sm btn-outline-warning" onclick="updateRepairStatus(${r.id}, 'In Progress')">▶️ Start</button>`);
+    }
+    if (r.status !== 'Ready') {
+        buttons.push(`<button class="btn btn-sm btn-outline-success" onclick="updateRepairStatus(${r.id}, 'Ready')">✅ Ready</button>`);
+    }
+    if (r.status !== 'Completed') {
+        buttons.push(`<button class="btn btn-sm btn-outline-secondary" onclick="updateRepairStatus(${r.id}, 'Completed')">✔️ Complete</button>`);
+    }
+    if (r.status !== 'CantRepair') {
+        buttons.push(`<button class="btn btn-sm btn-outline-danger" onclick="updateRepairStatus(${r.id}, 'CantRepair')">❌ Can't Repair</button>`);
+    }
+
+    buttons.push(`<button class="btn btn-sm btn-sms mt-1" onclick="triggerRepairSMS(${JSON.stringify(r).replace(/"/g, '&quot;')}, '${r.status}', true)">📲 SMS</button>`);
+
+    return `<div class="d-grid gap-1">${buttons.join('')}</div>`;
+}
+
+// ✅ ========== SAVE REPAIR WITH DATES ==========
+function saveRepair() {
+    const name = document.getElementById('repairCustomerName').value.trim();
+    const phone = document.getElementById('repairCustomerPhone').value.trim();
+    const device = document.getElementById('repairDeviceType').value.trim();
+    const issue = document.getElementById('repairIssue').value.trim();
+    const advance = parseFloat(document.getElementById('repairAdvance').value) || 0;
+    const pickDate = document.getElementById('repairPickDate').value;
+    const status = document.getElementById('repairStatus').value;
+
+    if (!name || !phone || !device) {
+        return alert('Please fill all required fields!');
+    }
+
+    // Auto-set delivery date if pick date provided and status is Ready
+    let deliveryDate = null;
+    if (pickDate && status === 'Ready') {
+        const pick = new Date(pickDate);
+        pick.setDate(pick.getDate() + 3);
+        deliveryDate = pick.toISOString().split('T')[0];
+    }
+
+    const newRepair = {
+        id: repairs.length ? Math.max(...repairs.map(r => r.id)) + 1 : 1,
+        customerName: name,
+        phone: phone,
+        deviceType: device,
+        issue: issue,
+        advance: advance,
+        pickDate: pickDate || null,
+        deliveryDate: deliveryDate || null,
+        status: status,
+        createdAt: new Date().toISOString()
+    };
+
+    repairs.push(newRepair);
+    localStorage.setItem('repairs', JSON.stringify(repairs));
+
+    triggerRepairSMS(newRepair, status);
+    updateDashboardStats();
+    renderDashboard();
+
+    bootstrap.Modal.getInstance(document.getElementById('newRepairModal')).hide();
+    document.getElementById('newRepairModal').querySelector('form').reset();
+}
+
+// ✅ ========== UPDATE REPAIR WITH DATES ==========
+function updateRepairStatus(id, newStatus) {
+    const repair = repairs.find(r => r.id === id);
+    if (!repair) return;
+
+    repair.status = newStatus;
+
+    if (newStatus === 'Ready' && !repair.estimatedCost) {
+        let fee = prompt(`✅ Set final repair fee for ${repair.deviceType}:`, "0.00");
+        if (fee === null) return;
+        fee = parseFloat(fee);
+        if (isNaN(fee) || fee < 0) {
+            alert('Please enter a valid fee.');
+            return;
+        }
+        repair.estimatedCost = fee;
+        
+        // Set delivery date if pick date exists
+        if (repair.pickDate && !repair.deliveryDate) {
+            const pick = new Date(repair.pickDate);
+            pick.setDate(pick.getDate() + 3);
+            repair.deliveryDate = pick.toISOString().split('T')[0];
+        }
+        
+        // Check if there's a balance due
+        const advance = parseFloat(repair.advance || 0);
+        const due = fee - advance;
+        if (due > 0) {
+            const dues = JSON.parse(localStorage.getItem('dues')) || [];
+            dues.push({
+                id: dues.length ? Math.max(...dues.map(d => d.id)) + 1 : 1,
+                type: 'repair',
+                referenceId: repair.id,
+                customerPhone: repair.phone,
+                amount: due,
+                date: new Date().toISOString(),
+                status: 'Pending'
+            });
+            localStorage.setItem('dues', JSON.stringify(dues));
+        }
+    }
+
+    if (newStatus === 'Completed') {
+        const fee = parseFloat(repair.estimatedCost || 0);
+        const advance = parseFloat(repair.advance || 0);
+        if (fee <= advance) {
+            let dues = JSON.parse(localStorage.getItem('dues')) || [];
+            dues = dues.filter(d => !(d.type === 'repair' && d.referenceId === repair.id));
+            localStorage.setItem('dues', JSON.stringify(dues));
+        }
+    }
+
+    localStorage.setItem('repairs', JSON.stringify(repairs));
+    renderRepairs('all');
+    updateDashboardStats();
+    renderDashboard();
+    renderDuePayments('all');
+
+    triggerRepairSMS(repair, newStatus);
+}
+
+// ========== POS & SALES ==========
+let cart = [];
+
+function addToCart(item) {
+    const existing = cart.find(c => c.sku === item.sku);
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({ ...item, qty: 1 });
+    }
+    renderCart();
+}
+
+function renderCart() {
+    const container = document.getElementById('cartItemsMobile');
+    container.innerHTML = '';
+    let subtotal = 0;
+
+    if (cart.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-2">Cart is empty</div>';
+        document.getElementById('subtotal').innerText = `Rs 0.00`;
+        document.getElementById('dueAmount').innerText = `Rs 0.00`;
+        document.getElementById('total').innerText = `Rs 0.00`;
+        document.getElementById('balanceDue').innerText = `Rs 0.00`;
+        return;
+    }
+
+    cart.forEach((item, index) => {
+        const lineTotal = item.price * item.qty;
+        subtotal += lineTotal;
+        const div = document.createElement('div');
+        div.className = 'card p-3 mb-2 cart-item';
+        div.innerHTML = `
+            <div class="d-flex justify-content-between">
+                <div>
+                    <strong>${item.name}</strong><br>
+                    <small>Rs ${item.price.toFixed(2)} each</small>
+                </div>
+                <input type="number" class="form-control cart-qty" value="${item.qty}" min="1" data-index="${index}">
+            </div>
+        `;
+        container.appendChild(div);
+
+        div.querySelector('.cart-qty').addEventListener('change', function() {
+            const newQty = parseInt(this.value) || 1;
+            if (newQty < 1) {
+                this.value = 1;
+                return;
+            }
+            cart[index].qty = newQty;
+            renderCart();
+        });
+    });
+
+    document.getElementById('subtotal').innerText = `Rs ${subtotal.toFixed(2)}`;
+    document.getElementById('total').innerText = `Rs ${subtotal.toFixed(2)}`;
+    calculateDueAmount();
+}
+
+function removeFromCart(index) {
+    cart.splice(index, 1);
+    renderCart();
+}
+
+function printReceipt(sale) {
+    document.getElementById('receiptInvoice').innerText = `INV-${String(sale.id).padStart(5, '0')}`;
+    document.getElementById('receiptDate').innerText = new Date(sale.date).toLocaleString('en-LK');
+    const receiptItems = document.getElementById('receiptItems');
+    receiptItems.innerHTML = '';
+
+    sale.items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'd-flex justify-content-between small';
+        div.innerHTML = `
+            <span>${item.name} x${item.qty}</span>
+            <span>Rs ${(item.price * item.qty).toFixed(2)}</span>
+        `;
+        receiptItems.appendChild(div);
+    });
+
+    document.getElementById('receiptSubtotal').innerText = `Rs ${sale.subtotal.toFixed(2)}`;
+    document.getElementById('receiptDue').innerText = `Rs ${sale.due.toFixed(2)}`;
+    document.getElementById('receiptTotal').innerText = `Rs ${sale.subtotal.toFixed(2)}`;
+    document.getElementById('receiptPayment').innerText = `${sale.paymentMethod}: Rs ${sale.paymentAmount.toFixed(2)}`;
+    document.getElementById('receiptBalanceDue').innerText = `Rs ${sale.due.toFixed(2)}`;
+
+    window.print();
+}
+
+// ========== CUSTOMERS ==========
+function renderCustomers(searchTerm = '') {
+    const container = document.getElementById('customerListMobile');
+    container.innerHTML = '';
+
+    const customerMap = {};
+    repairs.forEach(r => {
+        if (!customerMap[r.phone]) {
+            customerMap[r.phone] = {
+                name: r.customerName,
+                phone: r.phone,
+                devices: [],
+                visits: 0
+            };
+        }
+        customerMap[r.phone].devices.push(r.deviceType);
+        customerMap[r.phone].visits += 1;
+    });
+
+    sales.forEach(s => {
+        if (s.customerPhone && !customerMap[s.customerPhone]) {
+            customerMap[s.customerPhone] = {
+                name: 'Customer',
+                phone: s.customerPhone,
+                devices: [],
+                visits: 0
+            };
+        }
+        if (s.customerPhone) {
+            customerMap[s.customerPhone].visits += 1;
+        }
+    });
+
+    const customerArray = Object.values(customerMap).filter(c =>
+        c.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        c.phone.includes(searchTerm)
+    );
+
+    if (customerArray.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted py-3">No customers found.</div>';
+        return;
+    }
+
+    customerArray.forEach(cust => {
+        const div = document.createElement('div');
+        div.className = 'card p-3 mb-2';
+        div.innerHTML = `
+            <div class="fw-bold">${cust.name}</div>
+            <div class="text-muted small">${cust.phone}</div>
+            <div class="mt-1">
+                <small>Devices: ${cust.devices.join(', ')}</small><br>
+                <small>Visits: ${cust.visits}</small>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+// ========== REPORTS ==========
+function generateReport(type) {
+    const output = document.getElementById('reportOutput');
+    output.innerHTML = '<div class="text-center py-3">Generating...</div>';
+
+    setTimeout(() => {
+        if (type === 'sales') {
+            const totalSales = sales.reduce((sum, s) => sum + s.subtotal, 0);
+            const today = new Date().toDateString();
+            const todaySales = sales.filter(s => new Date(s.date).toDateString() === today)
+                                   .reduce((sum, s) => sum + s.subtotal, 0);
+            output.innerHTML = `
+                <h6 class="text-center">📊 SALES REPORT</h6>
+                <div class="d-flex justify-content-between"><strong>Total Revenue:</strong> <span>Rs ${totalSales.toFixed(2)}</span></div>
+                <div class="d-flex justify-content-between"><strong>Today's Sales:</strong> <span>Rs ${todaySales.toFixed(2)}</span></div>
+                <div class="d-flex justify-content-between"><strong>Transactions:</strong> <span>${sales.length}</span></div>
+                <button class="btn btn-refund btn-sm mt-3">💸 Refund Last Sale</button>
+            `;
+            document.querySelector('.btn-refund').onclick = function() {
+                if (sales.length > 0) {
+                    const last = sales.pop();
+                    alert(`✅ Refunded: Rs ${last.subtotal.toFixed(2)}\nPayment method: ${last.paymentMethod}`);
+                    localStorage.setItem('sales', JSON.stringify(sales));
+                    updateDashboardStats();
+                } else {
+                    alert('No sales to refund.');
+                }
+            };
+        } else if (type === 'repairs') {
+            const statusCount = repairs.reduce((acc, r) => {
+                acc[r.status] = (acc[r.status] || 0) + 1;
+                return acc;
+            }, {});
+            output.innerHTML = `
+                <h6 class="text-center">🔧 REPAIR REPORT</h6>
+                <div class="d-flex justify-content-between"><strong>Total Repairs:</strong> <span>${repairs.length}</span></div>
+                ${Object.entries(statusCount).map(([status, count]) => 
+                    `<div class="d-flex justify-content-between"><strong>${status}:</strong> <span>${count}</span></div>`
+                ).join('')}
+            `;
+        } else if (type === 'profit') {
+            const now = new Date();
+            const todayStr = now.toDateString();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+            const dailyProfit = sales
+                .filter(s => new Date(s.date).toDateString() === todayStr)
+                .reduce((sum, s) => sum + s.subtotal, 0);
+
+            const monthlyProfit = sales
+                .filter(s => new Date(s.date) >= firstDayOfMonth)
+                .reduce((sum, s) => sum + s.subtotal, 0);
+
+            output.innerHTML = `
+                <h6 class="text-center">💰 PROFIT REPORT</h6>
+                <div class="d-flex justify-content-between"><strong>Today's Profit:</strong> <span>Rs ${dailyProfit.toFixed(2)}</span></div>
+                <div class="d-flex justify-content-between"><strong>This Month Profit:</strong> <span>Rs ${monthlyProfit.toFixed(2)}</span></div>
+                <div class="d-flex justify-content-between"><strong>All-Time Revenue:</strong> <span>Rs ${sales.reduce((sum, s) => sum + s.subtotal, 0).toFixed(2)}</span></div>
+            `;
+        }
+    }, 500);
+}
+</script>
+
+</body>
+</html>
